@@ -1,0 +1,123 @@
+// *** alte Schreibweise für Gradle-Plugins ***
+buildscript {
+	repositories {
+		if (project.hasProperty("maven_host")) {
+			maven {
+				url maven_host
+				credentials {
+					username maven_username
+					password maven_password
+				}
+			}
+		} else {
+			maven {
+      			url "https://plugins.gradle.org/m2/"
+    		}
+		}
+	}
+	dependencies {
+		classpath "com.bmuschko:gradle-nexus-plugin:2.3.1"
+	}
+}
+apply plugin: "com.bmuschko.nexus"
+apply plugin: "java"
+apply plugin: "maven"
+apply plugin: "signing"
+//Für Publish ins lokale Artifactory
+apply plugin: "maven-publish"
+
+group = theGroup
+version = theVersion
+sourceCompatibility = theSourceCompatibility
+
+repositories {
+	if (project.hasProperty("maven_host")) {
+		maven {
+			url maven_host
+			credentials {
+				username maven_username
+				password maven_password
+			}
+		}
+	} else {
+		mavenCentral()
+	}
+}
+
+dependencies {
+	compile 'org.apache.tomcat:tomcat-catalina:8.5.9'
+}
+
+jar {
+	manifest {
+		attributes "Implementation-Title": "nest NikEm STack",
+		"Implementation-Version": version
+	}
+}
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+}
+
+modifyPom {
+	project {
+		name = "nest"
+		description = "nest NikEm STack Tomcat realms library"
+		url "https://github.com/rasenderhase/nest"
+
+		licenses {
+			license {
+				name = "The Apache Software License, Version 2.0"
+				url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+				distribution = "repo"
+			}
+		}
+		developers {
+			developer {
+				name = "Andreas Knees"
+				email = "andreas.knees@nikem.de"
+				organization = "nikem GmbH"
+				organizationUrl = "http://www.nikem.de"
+			}
+		}
+		scm {
+			connection "scm:git:git@github.com/rasenderhase/nest-tomcat-realms.git"
+			developerConnection "scm:git:git@github.com/rasenderhase/nest-tomcat-realms.git"
+			url "scm:git:git@github.com/rasenderhase/nest-tomcat-realms.git"
+		}
+	}
+}
+
+/*
+ * Publikation von SNAPSHOTs inslokale Artifactory-Repo:
+ * $> gradle publishMavenJavaPublicationToMavenRepository
+ */
+publishing {
+    repositories {
+    	if (project.hasProperty("maven_host_snapshots")) {
+	        maven {
+	            url maven_host_snapshots
+	            credentials {
+					username maven_username
+					password maven_password
+				}
+	        }
+        }
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            
+            artifact sourceJar {
+                classifier "sources"
+            }
+        }
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = "3.0"
+}
