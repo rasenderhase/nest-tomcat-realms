@@ -121,3 +121,13 @@ publishing {
 task wrapper(type: Wrapper) {
     gradleVersion = "3.0"
 }
+
+task deployToTomcat(type: Copy) {
+    from jar
+    into "${tomcatHome}/lib"
+}
+
+configure(deployToTomcat) {   
+    group = 'Publishing'
+    description = 'Publish artifact to tomcat lib directory'
+}
