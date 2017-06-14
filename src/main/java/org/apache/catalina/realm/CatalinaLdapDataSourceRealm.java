@@ -45,7 +45,7 @@ import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
             userRoleTable="v_user_role" 
             userTable="&quot;USER&quot;"
             
-            />
+            /&gt;
  * </pre>
  *
  * @author Greg Chabala, Andreas Knees
