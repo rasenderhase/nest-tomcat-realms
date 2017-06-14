@@ -24,13 +24,28 @@ import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
  * <br>
  * Example server.xml configuration fragment:<br>
  * <pre>
-   &lt;Realm className="org.apache.catalina.realm.CatalinaLdapDataSourceRealm"
-      connectionURL="ldap://ldaphost:389"
-      resourceName="LDAP Auth" driverName="oracle.jdbc.driver.OracleDriver"
-      userPattern="uid={0}, ou=Portal, dc=example, dc=com"
-      dataSourceName="jdbc/myDb"
-      userTable="users" userNameCol="user_id"
-      userRoleTable="user_role_xref" roleNameCol="role_id" /&gt;
+        &lt;Realm 
+            className="de.nikem.nest.tomcatrealms.ldapjdbc.LdapDataSourceRealm"
+            
+            connectionName="ad001\z00084or"
+            connectionPassword="xxx"
+
+            authentication="simple"
+            connectionURL="ldaps://ad001.siemens.net:636/dc=ad001,dc=siemens,dc=net"
+            referrals="follow"
+            userSearch="(sAMAccountName={0})"
+            userBase="OU=Users,OU=_Central,OU=40DE000,OU=40DE,OU=RA006" 
+            userSubtree="true"
+            
+            dataSourceName="jdbc/shopfloor_local"
+            
+            roleNameCol="role_name" 
+            userCredCol="password" 
+            userNameCol="user_name" 
+            userRoleTable="v_user_role" 
+            userTable="&quot;USER&quot;"
+            
+            />
  * </pre>
  *
  * @author Greg Chabala, Andreas Knees
@@ -70,6 +85,18 @@ public class CatalinaLdapDataSourceRealm extends JNDIRealm implements Realm
 	public void setContainer(Container container) {
 		super.setContainer(container);
 		dataSourceRealm.setContainer(getContainer());
+	}
+	
+	@Override
+	public Principal authenticate(String username, String credentials) {
+		Principal p = super.authenticate(username, credentials);
+		log.info("Principal retrieved from JNDI: " + p);
+		if (p == null) {
+			log.info("Fallback to DataSource authentication");
+			p = dataSourceRealm.authenticate(username, credentials);
+			log.info("Principal retrieved from DataSource: " + p);
+		}
+		return p;
 	}
 	
 	/**
@@ -160,6 +187,22 @@ public class CatalinaLdapDataSourceRealm extends JNDIRealm implements Realm
 	 */
 	public void setRoleNameCol(String roleNameCol) {
 		getDataSourceRealm().setRoleNameCol(roleNameCol);
+	}
+	
+	/**
+	 * @return the column in the user table that holds the user's credentials.
+	 * @see org.apache.catalina.realm.DataSourceRealm#getUserCredCol()
+	 */
+	public String getUserCredCol() {
+		return dataSourceRealm.getUserCredCol();
+	}
+
+	/**
+	 * @param userCredCol the column in the user table that holds the user's credentials.
+	 * @see org.apache.catalina.realm.DataSourceRealm#setUserCredCol(java.lang.String)
+	 */
+	public void setUserCredCol(String userCredCol) {
+		dataSourceRealm.setUserCredCol(userCredCol);
 	}
 
 	@Override
